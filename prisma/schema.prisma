@@ -14,230 +14,89 @@ datasource db {
   
   }
 
-//////////////////////////////////
-// ENUM
-//////////////////////////////////
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
 
 enum Role {
-  SUPERADMIN
+  PENJAGA
   ADMIN
 }
 
-enum AccountStatus {
-  ACTIVE
-  SUSPENDED
+enum PaymentMethod {
+  CASH
+  QRIS
 }
-
-enum TitleType {
-  HERO
-  SERVICES
-  ABOUTUS
-  VESSELS
-  EXHIBITIONS
-  CAREERS
-  VM
-  GALLERY
-  COREVALUES
-
-}
-
-//////////////////////////////////
-// USER / ACCOUNT
-//////////////////////////////////
 
 model User {
-  id        Int           @id @default(autoincrement())
-  name      String
-  email     String        @unique
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
   password  String
-  role      Role
-  status    AccountStatus @default(ACTIVE)
-
+  role      Role     @default(PENJAGA)
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-//////////////////////////////////
-// COMPANY PROFILE
-//////////////////////////////////
-
-model Company {
-  id          Int    @id @default(autoincrement())
-  name        String
-  email       String
-  address     String
-  phone       String
-  phone_code  String
-  gmapsUrl    String?
-  linkedin    String?
-  facebook    String?
-  instagram   String?
-  tiktok      String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-//////////////////////////////////
-// TITLE
-//////////////////////////////////
-model Crewing {
-  id          Int    @id @default(autoincrement())
-  email       String
-  phone       String
-  phone_code  String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-//////////////////////////////////
-// VISION & MISSION
-//////////////////////////////////
-
-model Vision {
-  id          Int    @id @default(autoincrement())
-  description String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Mission {
-  id          Int    @id @default(autoincrement())
-  description String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-//////////////////////////////////
-// CORE VALUES (TATA NILAI)
-//////////////////////////////////
-
-model CoreValue {
-  id          Int    @id @default(autoincrement())
-  title       String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-//////////////////////////////////
-// SERVICES / LAYANAN
-//////////////////////////////////
-
-model Service {
-  id          Int    @id @default(autoincrement())
-  title       String
-  description String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-//////////////////////////////////
-// VESSEL TYPE (MASTER)
-//////////////////////////////////
-
-model VesselType {
-  id    Int    @id @default(autoincrement())
-  name  String @unique
-
-  vessels Vessel[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-//////////////////////////////////
-// VESSELS
-//////////////////////////////////
-
-model Vessel {
-  id            Int    @id @default(autoincrement())
-  name          String
-  photo         String
-  description   String
-  imo           String
-  year          Int
-  country       String
-
-  vesselTypeId  Int
-  vesselType    VesselType @relation(fields: [vesselTypeId], references: [id], onDelete: Restrict)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([vesselTypeId])
-}
-
-//////////////////////////////////
-// EXHIBITIONS / KEGIATAN KAPAL
-//////////////////////////////////
-
-model Exhibition {
+model Menu {
   id          Int      @id @default(autoincrement())
   name        String
-  photo       String
-  description String
-  date        DateTime
+  price       Int
+  photo       String  
+  description String 
+
+  orderDetails OrderDetail[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Voucher {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  discount  Int      
+  startDate DateTime
+  endDate   DateTime
+  isUsed    Boolean  @default(false)
+
+  order     Order?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-//////////////////////////////////
-// ABOUT US
-//////////////////////////////////
+model Order {
+  id             Int      @id @default(autoincrement())
+  subtotal       Int
+  discount       Int      @default(0)
+  totalPrice     Int
+  paymentMethod  PaymentMethod
+  
+  voucherId      Int?     @unique
+  voucher        Voucher? @relation(fields: [voucherId], references: [id])
+  
+  orderDetails   OrderDetail[]
 
-model AboutUs {
-  id          Int    @id @default(autoincrement())
-  description String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
-//////////////////////////////////
-// CAREER
-//////////////////////////////////
+model OrderDetail {
+  id          Int      @id @default(autoincrement())
+  orderId     Int      
+  menuId      Int      
+  qty         Int
+  price       Int      
 
-model Career {
-  id          Int    @id @default(autoincrement())
-  title        String
-  description String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menu        Menu     @relation(fields: [menuId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-//////////////////////////////////
-// CAPTAIN
-//////////////////////////////////
-
-model Captain {
-  id          Int    @id @default(autoincrement())
-  name        String
-  quote       String
-  photo       String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-//////////////////////////////////
-// TITLE
-//////////////////////////////////
-
-model Title {
-  id          Int       @id @default(autoincrement())
-  title       String
-  title2      String?
-  subtitle    String?
-  tag         String?
-  type        TitleType @unique
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

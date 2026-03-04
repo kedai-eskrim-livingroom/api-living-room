@@ -3,7 +3,6 @@ import cors from "cors";
 import { config } from "dotenv";
 import route from "./src/routes/route.js";
 import http from "http";
-
 config({ path: ".env" });
 
 const app = express();
@@ -16,8 +15,6 @@ app.use(express.json());
 app.use(cors());
 
 app.use("/api", route);
-
-// console.log("DATABASE_URL =", process.env.DATABASE_URL);
 
 
 app.get("/", (req, res) => {

@@ -10,7 +10,7 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const CLOUDINARY_FOLDER = process.env.CLOUDINARY_FOLDER || "bks-shipman";
+const CLOUDINARY_FOLDER = process.env.CLOUDINARY_FOLDER || "living-room";
 
 export const upload = async (file, folder) => {
     try {
