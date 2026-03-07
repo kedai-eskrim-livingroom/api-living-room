@@ -249,24 +249,30 @@ export const exportSalesToExcel = async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
 
-        // 1. Logika Filter Tanggal (Sama seperti getSalesHistory)
-        let start = new Date();
-        let end = new Date();
+        // 1. Logika Filter Tanggal yang Dinamis
+        let dateFilter = {}; // Default: Kosong (Tarik semua data)
 
         if (startDate && endDate) {
-            start = new Date(startDate);
-            end = new Date(endDate);
-        } else if (startDate && !endDate) {
-            start = new Date(startDate);
-            end = new Date(startDate);
-        }
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
 
-        start.setHours(0, 0, 0, 0);
-        end.setHours(23, 59, 59, 999);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+
+            dateFilter = { createdAt: { gte: start, lte: end } };
+        } else if (startDate && !endDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+
+            const end = new Date(startDate);
+            end.setHours(23, 59, 59, 999);
+
+            dateFilter = { createdAt: { gte: start, lte: end } };
+        }
 
         // 2. Tarik Data dari Database
         const orders = await prisma.order.findMany({
-            where: { createdAt: { gte: start, lte: end } },
+            where: dateFilter, // Gunakan objek yang sudah disesuaikan kondisinya
             include: {
                 orderDetails: {
                     include: { menu: { select: { name: true } } }
@@ -289,18 +295,15 @@ export const exportSalesToExcel = async (req, res) => {
             { header: 'Total Harga (Rp)', key: 'total', width: 15 },
         ];
 
-        // Opsional: Bikin header jadi tebal (bold)
         worksheet.getRow(1).font = { bold: true };
 
         // 5. Masukkan Data ke Baris Excel
         orders.forEach((order) => {
-            // Gabungkan rincian es krim menjadi satu teks panjang. Misal: "2x Coklat, 1x Matcha"
             const itemsList = order.orderDetails
                 .map(detail => `${detail.qty}x ${detail.menu.name}`)
                 .join(', ');
 
             worksheet.addRow({
-                // Format waktu lokal Indonesia
                 date: order.createdAt.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }),
                 payment: order.paymentMethod,
                 items: itemsList,
@@ -309,14 +312,21 @@ export const exportSalesToExcel = async (req, res) => {
             });
         });
 
-        // 6. Set Header HTTP agar terbaca sebagai file donwload Excel
+        // 6. Penamaan File yang Aman
+        let filenameSuffix = "Semua";
+        if (startDate && endDate) {
+            filenameSuffix = `${startDate}_sampai_${endDate}`;
+        } else if (startDate) {
+            filenameSuffix = startDate;
+        }
+
         res.setHeader(
             'Content-Type',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         );
         res.setHeader(
             'Content-Disposition',
-            `attachment; filename=Laporan_Penjualan_${startDate + '-' + endDate || 'Semua'}.xlsx`
+            `attachment; filename=Laporan_Penjualan_${filenameSuffix}.xlsx`
         );
 
         // 7. Tulis file ke response stream dan kirim ke frontend
