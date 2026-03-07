@@ -18,7 +18,7 @@ app.use("/api", route);
 
 
 app.get("/", (req, res) => {
-    res.status(200).send({ message: "BKS SHIPMAN API" });
+    res.status(200).send({ message: "LIVING ROOM API" });
 });
 
 server.listen(port, () => {
