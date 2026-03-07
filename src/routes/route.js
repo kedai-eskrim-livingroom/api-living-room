@@ -23,7 +23,7 @@ route.get('/orders/export', auth, authorize("ADMIN"), orderController.exportSale
 route.get('/orders/history', auth, authorize("ADMIN"), orderController.getSalesHistory);
 
 // Menu Route
-route.get('/menus', auth, authorize("ADMIN"), menuController.getMenu);
+route.get('/menus', auth, authorize("ADMIN", "PENJAGA"), menuController.getMenu);
 route.post('/menus', auth, authorize("ADMIN"), upload.single("photo"), menuController.createMenu);
 route.put('/menus/:id', auth, authorize("ADMIN"), upload.single("photo"), menuController.updateMenu);
 route.delete('/menus', auth, authorize("ADMIN"), menuController.deleteMenu);
@@ -35,13 +35,13 @@ route.put('/vouchers/:id', auth, authorize("ADMIN"), voucherController.updateVou
 route.delete('/vouchers', auth, authorize("ADMIN"), voucherController.deleteVoucher);
 
 // Validasi voucher sebelum membuat pesanan
-route.post('/vouchers/validate', auth, authorize("PENJAGA", "ADMIN"), voucherController.validateVoucher);
+route.post('/vouchers/validate', auth, authorize("PENJAGA"), voucherController.validateVoucher);
 
 // Buat pesanan baru
-route.post('/orders', auth, authorize("PENJAGA", "ADMIN"), orderController.createOrder);
+route.post('/orders', auth, authorize("PENJAGA"), orderController.createOrder);
 
 // Laporan Harian (Akses: PENJAGA)
-route.get('/orders/daily', auth, authorize("PENJAGA", "ADMIN"), orderController.getDailyReport);
+route.get('/orders/daily', auth, authorize("PENJAGA"), orderController.getDailyReport);
 
 
 
