@@ -91,6 +91,9 @@ export const updateMenu = async (req, res) => {
 export const deleteMenu = async (req, res) => {
     try {
         const idsToDelete = req.body.id.map(Number);
+        await prisma.menu.deleteMany({
+            where: { id: { in: idsToDelete } }
+        });
 
         for (const menuId of idsToDelete) {
             const menu = await prisma.menu.findUnique({
@@ -104,9 +107,6 @@ export const deleteMenu = async (req, res) => {
             }
         }
 
-        await prisma.menu.deleteMany({
-            where: { id: { in: idsToDelete } }
-        });
 
         res.json({ message: "Menu berhasil dihapus" });
     } catch (error) {
