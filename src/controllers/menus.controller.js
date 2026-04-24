@@ -89,27 +89,66 @@ export const updateMenu = async (req, res) => {
 };
 
 export const deleteMenu = async (req, res) => {
+    // Variabel untuk menyimpan data foto yang sah untuk dihapus (jika DB sukses)
+    let photosToDelete = [];
+
     try {
+        // 1. Validasi Input
+        if (!req.body.id || !Array.isArray(req.body.id)) {
+            return res.status(400).json({ message: "ID menu tidak valid" });
+        }
+
         const idsToDelete = req.body.id.map(Number);
+
+        // 2. Ambil data menu sebelum dihapus untuk mendapatkan URL fotonya
+        const menus = await prisma.menu.findMany({
+            where: { id: { in: idsToDelete } },
+        });
+
+        if (menus.length === 0) {
+            return res.status(404).json({ message: "Menu tidak ditemukan" });
+        }
+
+        // Simpan URL fotonya ke memori (JANGAN dihapus dulu!)
+        photosToDelete = menus
+            .map(menu => menu.photo)
+            .filter(photo => photo); // Buang yang null/kosong
+
+        // 3. EKSEKUSI DATABASE UTAMA
+        // Jika gagal karena Foreign Key Constraint (P2003), 
+        // akan langsung terlempar ke blok `catch` di bawah.
         await prisma.menu.deleteMany({
             where: { id: { in: idsToDelete } }
         });
 
-        for (const menuId of idsToDelete) {
-            const menu = await prisma.menu.findUnique({
-                where: { id: menuId },
-            });
-
-            if (menu) {
-                const publicId = menu.photo.split("/").pop().split(".")[0];
-                const publicFolder = menu.photo.split("/").slice(-2, -1)[0];
-                await deleteImage(publicId, publicFolder);
-            }
-        }
-
-
-        res.json({ message: "Menu berhasil dihapus" });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        // TANGKAP ERROR DATABASE DI SINI
+        if (error.code === 'P2003') {
+            return res.status(400).json({
+                message: "Gagal menghapus: Menu ini tidak bisa dihapus karena sudah tercatat dalam riwayat pesanan."
+            });
+        }
+        return res.status(500).json({ message: error.message });
     }
+
+    // -------------------------------------------------------------
+    // 4. ZONA AMAN CLOUDINARY
+    // Jika eksekusi mencapai titik ini, BERARTI DATABASE SUDAH 100% SUKSES DIHAPUS.
+    // Sekarang, aman untuk menghapus foto di Cloudinary.
+    // -------------------------------------------------------------
+
+    // Kita jalankan penghapusan Cloudinary secara background (tidak perlu await strict)
+    // agar response ke client lebih cepat.
+    for (const photoUrl of photosToDelete) {
+        try {
+            const publicId = photoUrl.split("/").pop().split(".")[0];
+            const publicFolder = photoUrl.split("/").slice(-2, -1)[0];
+            await deleteImage(publicId, publicFolder);
+        } catch (cloudinaryErr) {
+            console.warn(`[Cloudinary Warning] Gagal menghapus foto: ${photoUrl}`, cloudinaryErr.message);
+        }
+    }
+
+    // Kembalikan response sukses
+    return res.json({ message: "Menu beserta foto berhasil dihapus" });
 };
