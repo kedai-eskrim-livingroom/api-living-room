@@ -7,6 +7,7 @@ import * as menuController from '../controllers/menus.controller.js';
 import * as voucherController from '../controllers/vouchers.controller.js';
 import * as orderController from '../controllers/orders.controller.js';
 import * as dashboardController from '../controllers/dashboard.controller.js';
+import * as accountController from '../controllers/account.controller.js';
 
 const route = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -21,6 +22,12 @@ route.get('/dashboard', auth, authorize("ADMIN"), dashboardController.getDashboa
 // Riwayat
 route.get('/orders/export', auth, authorize("ADMIN"), orderController.exportSalesToExcel);
 route.get('/orders/history', auth, authorize("ADMIN"), orderController.getSalesHistory);
+
+// Akun
+route.get('/accounts', auth, authorize("ADMIN"), accountController.getAccounts);
+route.post('/accounts', auth, authorize("ADMIN"), accountController.createAccount);
+route.put('/accounts/:id', auth, authorize("ADMIN"), accountController.updateAccount);
+route.delete('/accounts', auth, authorize("ADMIN"), accountController.deleteAccount);
 
 // Menu Route
 route.get('/menus', auth, authorize("ADMIN", "PENJAGA"), menuController.getMenu);
