@@ -4,7 +4,11 @@ import { deleteImage, upload } from "../middleware/cloudinary.js";
 export const getMenu = async (req, res) => {
     try {
         const data = await prisma.menu.findMany({
-            orderBy: { createdAt: 'desc' }
+            orderBy: {
+                orderDetails: {
+                    _count: 'desc' // Mengurutkan dari yang paling banyak ada di riwayat transaksi
+                }
+            }
         });
         res.json(data);
     } catch (error) {
