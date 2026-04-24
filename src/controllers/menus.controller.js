@@ -90,66 +90,26 @@ export const updateMenu = async (req, res) => {
 
 export const deleteMenu = async (req, res) => {
     try {
-        // 1. Validasi Input
-        if (!req.body.id || !Array.isArray(req.body.id)) {
-            return res.status(400).json({ message: "ID menu tidak valid" });
-        }
-
         const idsToDelete = req.body.id.map(Number);
-
-        // ====================================================================
-        // 2. PRE-CHECK: PENGECEKAN MANUAL (100% ANTI BOCOR)
-        // Kita cek dulu apakah menu ini pernah dibeli dan masuk di OrderDetail
-        // ====================================================================
-        const isMenuUsed = await prisma.orderDetail.findFirst({
-            where: {
-                menuId: { in: idsToDelete }
-            }
-        });
-
-        // JIKA PERNAH DIBELI: Tolak langsung! Sistem akan berhenti di sini.
-        // Database aman, Cloudinary juga aman (karena kodenya ada di bawah).
-        if (isMenuUsed) {
-            return res.status(400).json({
-                message: "Gagal menghapus: Menu ini sudah tercatat dalam riwayat pesanan pelanggan. Tidak boleh dihapus."
-            });
-        }
-
-        // ====================================================================
-        // 3. JIKA LOLOS PENGECEKAN, LANJUT PROSES HAPUS
-        // ====================================================================
-
-        // Ambil data menu untuk mengambil URL foto
-        const menus = await prisma.menu.findMany({
-            where: { id: { in: idsToDelete } },
-        });
-
-        if (menus.length === 0) {
-            return res.status(404).json({ message: "Menu tidak ditemukan" });
-        }
-
-        // Hapus data menu dari Database Prisma
         await prisma.menu.deleteMany({
             where: { id: { in: idsToDelete } }
         });
 
-        // Hapus foto dari Cloudinary
-        for (const menu of menus) {
-            if (menu.photo) {
-                try {
-                    const publicId = menu.photo.split("/").pop().split(".")[0];
-                    const publicFolder = menu.photo.split("/").slice(-2, -1)[0];
-                    await deleteImage(publicId, publicFolder);
-                } catch (cloudinaryErr) {
-                    console.warn(`[Info] Gagal hapus foto di Cloudinary untuk menu ID ${menu.id}, tapi database sukses.`);
-                }
+        for (const menuId of idsToDelete) {
+            const menu = await prisma.menu.findUnique({
+                where: { id: menuId },
+            });
+
+            if (menu) {
+                const publicId = menu.photo.split("/").pop().split(".")[0];
+                const publicFolder = menu.photo.split("/").slice(-2, -1)[0];
+                await deleteImage(publicId, publicFolder);
             }
         }
 
-        return res.json({ message: "Menu beserta foto berhasil dihapus" });
 
+        res.json({ message: "Menu berhasil dihapus" });
     } catch (error) {
-        console.error("Error Delete Menu:", error);
-        return res.status(500).json({ message: "Terjadi kesalahan pada server", error: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
