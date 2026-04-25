@@ -18,10 +18,10 @@ export const getAccounts = async (req, res) => {
 // Membuat akun baru (Untuk Admin)
 export const createAccount = async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
+        const { email, password, role } = req.body;
 
-        if (!name || !email || !password) {
-            return res.status(400).json({ message: `Kolom ${!name ? "Nama" : !email ? "Email" : !password ? "Password" : "Peran"} harus diisi` });
+        if (!email || !password) {
+            return res.status(400).json({ message: `Kolom ${!email ? "Email" : !password ? "Password" : "Peran"} harus diisi` });
         }
 
         // validasi email (harus unik)
@@ -35,7 +35,6 @@ export const createAccount = async (req, res) => {
 
         const data = await prisma.user.create({
             data: {
-                name,
                 email,
                 password,
                 role: 'PENJAGA'
@@ -51,7 +50,7 @@ export const createAccount = async (req, res) => {
 export const updateAccount = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, email, password, role } = req.body;
+        const { email, password, role } = req.body;
 
         const existing = await prisma.user.findUnique({
             where: { id: Number(id) },
@@ -71,7 +70,6 @@ export const updateAccount = async (req, res) => {
         const data = await prisma.user.update({
             where: { id: Number(id) },
             data: {
-                name: name || existing.name,
                 email: email || existing.email,
                 password: password || existing.password,
                 role: role || existing.role
