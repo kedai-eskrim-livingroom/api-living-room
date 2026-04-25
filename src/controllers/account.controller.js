@@ -1,4 +1,5 @@
 import prisma from "../../prisma/client.js";
+import bcrypt from "bcrypt";
 
 // Mengambil semua data akun (Biasanya untuk Admin)
 export const getAccounts = async (req, res) => {
@@ -33,10 +34,12 @@ export const createAccount = async (req, res) => {
             return res.status(400).json({ message: "Email sudah digunakan, silakan gunakan email lain" });
         }
 
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         const data = await prisma.user.create({
             data: {
                 email,
-                password,
+                password: hashedPassword,
                 role: 'PENJAGA'
             }
         });
@@ -67,11 +70,13 @@ export const updateAccount = async (req, res) => {
             }
         }
 
+        const hashedPassword = password ? await bcrypt.hash(password, 10) : existing.password;
+
         const data = await prisma.user.update({
             where: { id: Number(id) },
             data: {
                 email: email || existing.email,
-                password: password || existing.password,
+                password: hashedPassword,
                 role: role || existing.role
             }
         });
