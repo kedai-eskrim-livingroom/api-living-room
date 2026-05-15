@@ -198,27 +198,41 @@ export const getSalesHistory = async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
 
-        let start = new Date();
-        let end = new Date();
+        // 1. Default: Objek kosong (menarik semua data)
+        let dateFilter = {};
 
-        if (startDate && endDate) {
-            start = new Date(startDate);
-            end = new Date(endDate);
-        } else if (startDate && !endDate) {
-            start = new Date(startDate);
-            end = new Date(startDate);
-        }
+        // 2. Jika parameter BUKAN 'all', jalankan proses filter tanggal
+        if (startDate && startDate !== 'all') {
+            if (startDate && endDate) {
+                let start = new Date(startDate);
+                let end = new Date(endDate);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
 
-        start.setHours(0, 0, 0, 0);
-        end.setHours(23, 59, 59, 999);
+                dateFilter = {
+                    createdAt: {
+                        gte: start,
+                        lte: end
+                    }
+                };
+            } else if (startDate && !endDate) {
+                let start = new Date(startDate);
+                let end = new Date(startDate);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
 
-        const dateFilter = {
-            createdAt: {
-                gte: start,
-                lte: end
+                dateFilter = {
+                    createdAt: {
+                        gte: start,
+                        lte: end
+                    }
+                };
             }
-        };
+        }
+        // Jika startDate === 'all', kode if di atas dilewati, 
+        // sehingga dateFilter tetap {} dan Prisma mengambil SEMUA data.
 
+        // 3. Masukkan dateFilter ke dalam query Prisma
         const orders = await prisma.order.findMany({
             where: dateFilter,
             include: {
