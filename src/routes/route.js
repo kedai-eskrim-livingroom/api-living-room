@@ -22,7 +22,7 @@ route.get('/dashboard', auth, authorize("ADMIN"), dashboardController.getDashboa
 // Riwayat
 route.get('/orders/export', auth, authorize("ADMIN"), orderController.exportSalesToExcel);
 route.get('/orders/history', auth, authorize("ADMIN"), orderController.getSalesHistory);
-route.get('/orders/delete', auth, authorize("ADMIN"), orderController.deleteOrder);
+route.delete('/orders/delete', auth, authorize("ADMIN"), orderController.deleteOrder);
 
 // Akun
 route.get('/accounts', auth, authorize("ADMIN"), accountController.getAccounts);
