@@ -6,9 +6,6 @@ export const getAccounts = async (req, res) => {
     try {
         const data = await prisma.user.findMany({
             orderBy: { createdAt: 'desc' },
-            where: {
-                role: { equals: 'PENJAGA' }
-            }
         });
         res.json(data);
     } catch (error) {
@@ -40,7 +37,7 @@ export const createAccount = async (req, res) => {
             data: {
                 email,
                 password: hashedPassword,
-                role: 'PENJAGA'
+                role: role || "PENJAGA"
             }
         });
 
