@@ -28,6 +28,8 @@ model User {
   email     String   @unique
   password  String
   role      Role     @default(PENJAGA)
+
+  orders    Order[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -68,7 +70,10 @@ model Order {
   paymentMethod  PaymentMethod
   
   voucherId      Int?     @unique
-  voucher        Voucher? @relation(fields: [voucherId], references: [id])
+  voucher        Voucher? @relation(fields: [voucherId], references: [id], onDelete: SetNull)
+
+  userId         Int?        @default(2)
+  user           User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   
   orderDetails   OrderDetail[]
 
@@ -84,7 +89,7 @@ model OrderDetail {
   price       Int      
 
   order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  menu        Menu     @relation(fields: [menuId], references: [id])
+  menu        Menu     @relation(fields: [menuId], references: [id], onDelete: SetNull)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

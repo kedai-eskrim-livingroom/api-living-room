@@ -100,6 +100,24 @@ export const createOrder = async (req, res) => {
     }
 };
 
+export const deleteOrder = async (req, res) => {
+    try {
+        const idsToDelete = req.body.id.map(Number);
+        await prisma.order.deleteMany({
+            where: { id: { in: idsToDelete } }
+        });
+
+        for (const orderId of idsToDelete) {
+            const order = await prisma.order.findUnique({
+                where: { id: orderId },
+            });
+        }
+        res.json({ message: "Pesanan berhasil dihapus" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 
 // Laporan penjaga
 export const getDailyReport = async (req, res) => {
