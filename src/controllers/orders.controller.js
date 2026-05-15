@@ -3,7 +3,7 @@ import excelJS from 'exceljs';
 
 export const createOrder = async (req, res) => {
     try {
-        const { items, paymentMethod, voucherId } = req.body;
+        const { items, paymentMethod, voucherId, userId } = req.body;
 
         if (!items || items.length === 0) {
             return res.status(400).json({ message: "Keranjang pesanan tidak boleh kosong" });
@@ -74,6 +74,7 @@ export const createOrder = async (req, res) => {
                     discount: discountAmount,
                     totalPrice,
                     paymentMethod,
+                    userId: userId ? Number(userId) : null,
                     voucherId: voucherId ? Number(voucherId) : null,
                     orderDetails: {
                         create: orderDetailsData
