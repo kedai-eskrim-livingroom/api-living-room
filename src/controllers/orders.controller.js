@@ -107,11 +107,6 @@ export const deleteOrder = async (req, res) => {
             where: { id: { in: idsToDelete } }
         });
 
-        for (const orderId of idsToDelete) {
-            const order = await prisma.order.findUnique({
-                where: { id: orderId },
-            });
-        }
         res.json({ message: "Pesanan berhasil dihapus" });
     } catch (error) {
         res.status(500).json({ message: error.message });
